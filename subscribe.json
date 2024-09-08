@@ -1,0 +1,8 @@
+{
+    "topic": "stage:lobby",
+    "event": "phx_join",
+    "payload": {
+      "name": "John"
+    },
+    "ref": null
+  }

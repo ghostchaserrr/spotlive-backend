@@ -1,0 +1,8 @@
+{
+    "topic": "stage:1",
+    "event": "take_seat",
+    "payload": {
+      "seatIdx": 1
+    },
+    "ref": null
+  }
