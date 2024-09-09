@@ -29,7 +29,10 @@ defmodule SpotliveWeb.Router do
   scope "/", SpotliveWeb do
     pipe_through [:auth]
     get "/session", UserController, :session
+    get "/stages", StageController, :stages
+    get "/stage", StageController, :stage
   end
+  
 
   
 

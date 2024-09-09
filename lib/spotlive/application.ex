@@ -19,7 +19,7 @@ defmodule Spotlive.Application do
       # Start to serve requests, typically the last entry
       SpotliveWeb.Endpoint,
       # Task for stage-id-1 with a unique ID
-      Supervisor.child_spec({Task, fn -> SpotliveWeb.StateMachine.generate_round("stage-id-1") end}, id: :stage_1_task),
+      # Supervisor.child_spec({Task, fn -> SpotliveWeb.StateMachine.generate_round("stage-id-1") end}, id: :stage_1_task),
 
     ]
 
@@ -28,10 +28,12 @@ defmodule Spotlive.Application do
     opts = [strategy: :one_for_one, name: Spotlive.Supervisor]
     # init table
     :ets.new(:user_lookup,    [:named_table, :public])
+    :ets.new(:user_stage_lookup,    [:named_table, :public])
     :ets.new(:seat_lookup,    [:named_table, :public])
     :ets.new(:speaker_lookup, [:named_table, :public])
     :ets.new(:round_lookup,   [:named_table, :public])
     :ets.new(:stage_lookup,   [:named_table, :public])
+    :ets.new(:session_lookup,   [:named_table, :public])
     Supervisor.start_link(children, opts)
   end
 
