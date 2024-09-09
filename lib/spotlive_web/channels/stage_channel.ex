@@ -108,12 +108,12 @@ defmodule SpotliveWeb.StageChannel do
   end
 
   def terminate(_reason, socket) do
-    
-    id = Map.get(session, :id)
     session = socket.assigns.session
     username = socket.assigns.session.username
-    userId = Map.get(session, :id)
     stageId = socket.assigns.stageId
+    id = Map.get(session, :id)
+    userId = Map.get(session, :id)
+
 
     broadcast!(socket, "viewer_left", %{
       :message => "A viewer has left the stage",

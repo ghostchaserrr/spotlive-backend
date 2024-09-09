@@ -1,4 +1,4 @@
-defmodule SpotliveWeb.StateMachine do
+defmodule SpotliveWeb.StageStateMachine do
   alias  SpotliveWeb.CommonHelper
   require Logger
 
