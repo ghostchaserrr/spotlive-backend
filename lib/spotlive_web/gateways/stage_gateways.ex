@@ -3,6 +3,7 @@ defmodule SpotliveWeb.StageGateways do
   alias SpotliveWeb.JWTHelper
   alias Spotlive.UserService
 
+
   channel "stage:*", SpotliveWeb.StageChannel
 
   transport(:websocket, Phoenix.Transports.WebSocket)

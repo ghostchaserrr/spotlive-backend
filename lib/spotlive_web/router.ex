@@ -14,18 +14,24 @@ defmodule SpotliveWeb.Router do
     plug :accepts, ["json"]
   end
 
-  scope "/", SpotliveWeb do
-    pipe_through :browser
-
-    get "/", PageController, :home
+  pipeline :auth do
+    plug SpotliveWeb.Plugs.Auth
   end
 
   scope "/api", SpotliveWeb do
     pipe_through :api
 
-    post "/signup", UserController, :signup
-    post "/signin", UserController, :signin
+    post "/signup",  UserController, :signup
+    post "/signin",  UserController, :signin
+
   end
+
+  scope "/", SpotliveWeb do
+    pipe_through [:auth]
+    get "/session", UserController, :session
+  end
+
+  
 
   # Other scopes may use custom stacks.
   # scope "/api", SpotliveWeb do

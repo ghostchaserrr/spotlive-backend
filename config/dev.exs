@@ -1,5 +1,10 @@
 import Config
 
+
+config :logger, :console,
+  format: "[$level] $message\n",
+  colors: [debug: :cyan, info: :green, warn: :yellow, error: :red]
+
 # Configure your database
 config :spotlive, Spotlive.Repo,
   username: "admin",

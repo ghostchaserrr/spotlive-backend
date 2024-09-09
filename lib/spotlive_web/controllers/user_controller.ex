@@ -3,6 +3,13 @@ defmodule SpotliveWeb.UserController do
   alias SpotliveWeb.JWTHelper
   alias Spotlive.UserService
 
+  def session(conn, _params) do
+    session = conn.assigns[:session]
+    conn
+    |> put_status(200)
+    |> json(%{"session" => session})
+  end
+
   def signin(conn, %{"username" => username, "password" => password}) do
     case UserService.authenticate_user(username, password) do
       {:error, message} -> 
