@@ -1,4 +1,5 @@
 defmodule SpotliveWeb.StateMachine do
+  alias  SpotliveWeb.CommonHelper
   def generate_round(stageId) do
     # case. prepare new ets table
 
@@ -22,7 +23,7 @@ defmodule SpotliveWeb.StateMachine do
 
     # Guests prepare for the show start
     log_info("Guests are preparing for the show. Sleeping for 5 seconds.")
-    Process.sleep(30_000)
+    Process.sleep(60_000)
 
     # topic.
     stage = "stage:" <> roundId
@@ -32,7 +33,7 @@ defmodule SpotliveWeb.StateMachine do
 
     log_info("Stage ID: #{stage}. Preparing phase ending, transitioning to 'speaking' phase.")
 
-    case updateRoundPhase(roundId, "speaking") do
+    case setRoundPhase(roundId, "speaking") do
       true ->
         log_info("Successfully updated round (#{roundId}) phase to 'speaking'.")
         moveGameState()
@@ -55,7 +56,7 @@ defmodule SpotliveWeb.StateMachine do
 
     SpotliveWeb.Endpoint.broadcast(stage, "phase_update", %{phase: "speaking", round_id: roundId})
 
-    case updateRoundPhase(roundId, "speaking") do
+    case setRoundPhase(roundId, "speaking") do
       true ->
         log_info("Successfully updated round (#{roundId}) phase to 'feedbacks'.")
         moveGameState()
@@ -78,7 +79,7 @@ defmodule SpotliveWeb.StateMachine do
 
     SpotliveWeb.Endpoint.broadcast(stage, "phase_update", %{phase: "finished", round_id: roundId})
 
-    case updateRoundPhase(roundId, "finished") do
+    case setRoundPhase(roundId, "finished") do
       true ->
         log_info("Successfully updated round (#{roundId}) phase to 'finished'.")
         moveGameState()
@@ -111,7 +112,7 @@ defmodule SpotliveWeb.StateMachine do
       prev_round_id: roundId
     })
 
-    case updateRoundPhase(new_round_id, "preparing") do
+    case setRoundPhase(new_round_id, "preparing") do
       true ->
         log_info("Successfully updated round (#{new_round_id}) phase to 'preparing'.")
         moveGameState()
@@ -141,7 +142,7 @@ defmodule SpotliveWeb.StateMachine do
     end
   end
 
-  defp updateRoundPhase(roundId, phase) do
+  defp setRoundPhase(roundId, phase) do
     round_tuple = {get_stage_id(), roundId, phase}
     result = :ets.insert(:round_lookup, round_tuple)
 
@@ -164,7 +165,7 @@ defmodule SpotliveWeb.StateMachine do
     roundId = initNewRound()
     log_info("initing current stage")
 
-    case updateRoundPhase(roundId, "preparing") do
+    case setRoundPhase(roundId, "preparing") do
       true ->
         log_info("Starting state machine for round (#{roundId}).")
         moveGameState()
