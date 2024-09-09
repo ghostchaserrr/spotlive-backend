@@ -1,6 +1,5 @@
 defmodule SpotliveWeb.StageChannel do
   use Phoenix.Channel
-  SpotliveWeb.CommonHelper
   alias SpotliveWeb.CommonHelper
   alias Spotlive.StageMemoryService
   require Logger
@@ -109,8 +108,12 @@ defmodule SpotliveWeb.StageChannel do
   end
 
   def terminate(_reason, socket) do
-    session = socket.assigns.session
+    
     id = Map.get(session, :id)
+    session = socket.assigns.session
+    username = socket.assigns.session.username
+    userId = Map.get(session, :id)
+    stageId = socket.assigns.stageId
 
     broadcast!(socket, "viewer_left", %{
       :message => "A viewer has left the stage",
