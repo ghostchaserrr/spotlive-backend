@@ -1,7 +1,7 @@
 defmodule SpotliveWeb.StageController do
   use SpotliveWeb, :controller
   alias SpotliveWeb.JWTHelper
-  alias Spotlive.UserService
+  alias Spotlive.UserDatabaseService
   alias Spotlive.StageMemoryService
   require Logger
 

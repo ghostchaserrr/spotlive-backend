@@ -2,7 +2,7 @@ defmodule SpotliveWeb.Plugs.Auth do
     import Plug.Conn
     use SpotliveWeb, :controller
     alias SpotliveWeb.Router.Helpers
-    alias Spotlive.UserService
+    alias Spotlive.UserDatabaseService
     alias SpotliveWeb.JWTHelper
     require Logger
 
@@ -16,7 +16,7 @@ defmodule SpotliveWeb.Plugs.Auth do
               case result do
                 [] ->
                   Logger.debug("fresh: #{inspect(token)}")
-                  user = UserService.get_user_by_user_id(user_id)
+                  user = UserDatabaseService.get_user_by_user_id(user_id)
                   :ets.insert(:session_lookup, {token, user.id, user.username})
                   conn
                   |> assign(:session, %{:id => user.id, :username => user.username})

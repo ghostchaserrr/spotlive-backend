@@ -96,19 +96,15 @@ defmodule SpotliveWeb.StageChannel do
     {:noreply, socket}
   end
 
-  def handle_error(socket, message) do
-    error_message = %{error: message}
-    push(socket, "error", error_message)
-    {:noreply, socket}
-  end
-
   # Handle incoming messages if necessary
   def handle_in(event, params, socket) do
     case event do
       "take_stage" -> handle_take_stage(params, socket)
       "leave_seat" -> handle_leave_seat(params, socket)
       "take_seat" -> handle_take_seat(params, socket)
-      _ -> handle_error(socket, "invalid event")
+      _ -> 
+        push(socket, "error", "invalid event")
+        {:noreply, socket}
     end
   end
 

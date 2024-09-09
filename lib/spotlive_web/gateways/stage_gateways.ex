@@ -1,7 +1,7 @@
 defmodule SpotliveWeb.StageGateways do
   use Phoenix.Socket
   alias SpotliveWeb.JWTHelper
-  alias Spotlive.UserService
+  alias Spotlive.UserDatabaseService
 
 
   channel "stage:*", SpotliveWeb.StageChannel
@@ -11,7 +11,7 @@ defmodule SpotliveWeb.StageGateways do
   def connect(%{"token" => token}, socket, _connect_info) do
     case JWTHelper.verify(token) do
       {:ok, %{"user_id" => user_id}} ->
-        user = UserService.get_user_by_user_id(user_id)
+        user = UserDatabaseService.get_user_by_user_id(user_id)
         session = %{:id => user.id, :username => user.username}
         
         # case. load live round

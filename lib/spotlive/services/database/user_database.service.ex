@@ -1,4 +1,4 @@
-defmodule Spotlive.UserService do
+defmodule Spotlive.UserDatabaseService do
     alias Spotlive.Repo
     alias SpotliveWeb.JWTHelper
     alias Spotlive.Accounts.User
