@@ -1,14 +1,19 @@
 defmodule Spotlive.StageMemoryService do
+  require Logger
+
   def store_connected_user(stageId, userId, username) do
+    Logger.info("Storing connected user. Stage ID: #{stageId}, User ID: #{userId}, Username: #{username}")
     :ets.insert(:user_lookup, {stageId, userId, username})
   end
 
   def store_taken_seat(stageId, seatIdx, userId) do
+    Logger.info("Storing taken seat. Stage ID: #{stageId}, Seat Index: #{seatIdx}, User ID: #{userId}")
     :ets.insert(:seat_lookup, {stageId, seatIdx, userId})
   end
 
   def delete_connected_user(stageId, userId, username) do
-    :ets.insert(:user_lookup, {stageId, userId, username})
+    Logger.info("Deleting connected user. Stage ID: #{stageId}, User ID: #{userId}, Username: #{username}")
+    :ets.delete_object(:user_lookup, {stageId, userId, username})
   end
 
   def performer(stageId) do

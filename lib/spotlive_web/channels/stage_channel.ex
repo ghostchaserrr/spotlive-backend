@@ -22,6 +22,8 @@ defmodule SpotliveWeb.StageChannel do
 
     push(socket, "notification", %{notification: "Welcome to the stage"})
 
+    Logger.info("User connected to stage: #{stageId}")
+
     StageMemoryService.store_connected_user(stageId, userId, username)
 
     users = StageMemoryService.users(stageId)
@@ -111,10 +113,9 @@ defmodule SpotliveWeb.StageChannel do
     session = socket.assigns.session
     username = socket.assigns.session.username
     stageId = socket.assigns.stageId
-    id = Map.get(session, :id)
     userId = Map.get(session, :id)
 
-
+    StageMemoryService.delete_connected_user(stageId, userId, username)
     broadcast!(socket, "viewer_left", %{
       :message => "A viewer has left the stage",
       :session => session

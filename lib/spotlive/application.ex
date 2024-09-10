@@ -19,8 +19,7 @@ defmodule Spotlive.Application do
       # Start to serve requests, typically the last entry
       SpotliveWeb.Endpoint,
       # Task for stage-id-1 with a unique ID
-      Supervisor.child_spec({Task, fn -> SpotliveWeb.StageStateMachine.generate_round("stage-id-1") end}, id: :stage_1_task),
-
+      # Supervisor.child_spec({Task, fn -> SpotliveWeb.StageStateMachine.generate_round("stage-id-1") end}, id: :stage_1_task),
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
