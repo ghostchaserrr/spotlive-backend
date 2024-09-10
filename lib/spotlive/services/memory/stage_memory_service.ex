@@ -1,19 +1,46 @@
 defmodule Spotlive.StageMemoryService do
   require Logger
 
+  @redis_key_prefix "stage:"
+
   def store_connected_user(stageId, userId, username) do
-    Logger.info("Storing connected user. Stage ID: #{stageId}, User ID: #{userId}, Username: #{username}")
-    :ets.insert(:user_lookup, {stageId, userId, username})
+    Logger.info(
+      "Storing connected user. Stage ID: #{stageId}, User ID: #{userId}, Username: #{username}"
+    )
+
+    key = "#{@redis_key_prefix}#{stageId}:users"
+    Redix.command!(:redix, ["HSET", key, userId, username])
   end
 
   def store_taken_seat(stageId, seatIdx, userId) do
-    Logger.info("Storing taken seat. Stage ID: #{stageId}, Seat Index: #{seatIdx}, User ID: #{userId}")
-    :ets.insert(:seat_lookup, {stageId, seatIdx, userId})
+    Logger.info(
+      "Storing taken seat. Stage ID: #{stageId}, Seat Index: #{seatIdx}, User ID: #{userId}"
+    )
+
+    key = "#{@redis_key_prefix}#{stageId}:seats"
+    Redix.command!(:redix, ["HSET", key, seatIdx, userId])
   end
 
-  def delete_connected_user(stageId, userId, username) do
-    Logger.info("Deleting connected user. Stage ID: #{stageId}, User ID: #{userId}, Username: #{username}")
-    :ets.delete_object(:user_lookup, {stageId, userId, username})
+  def delete_connected_user(stageId, userId) do
+    Logger.info("Deleting connected user. Stage ID: #{stageId}, User ID: #{userId}")
+
+    key = "#{@redis_key_prefix}#{stageId}:users"
+
+    case Redix.command(:redix, ["HDEL", key, userId]) do
+      {:ok, _deleted_count} ->
+        Logger.info(
+          "Successfully deleted connected user with ID: #{userId} from Stage ID: #{stageId}"
+        )
+
+        :ok
+
+      {:error, reason} ->
+        Logger.error(
+          "Failed to delete connected user with ID: #{userId} from Stage ID: #{stageId}. Reason: #{inspect(reason)}"
+        )
+
+        {:error, reason}
+    end
   end
 
   def performer(stageId) do
@@ -24,7 +51,7 @@ defmodule Spotlive.StageMemoryService do
         currentStageId == stageId
       end)
 
-      IO.inspect(performers)
+    IO.inspect(performers)
 
     performers =
       Enum.map(performers, fn {stageId, userId, username} ->
@@ -35,13 +62,23 @@ defmodule Spotlive.StageMemoryService do
         }
       end)
 
-      IO.inspect(performers)
-
-      List.first(performers)
+    IO.inspect(performers)
+    List.first(performers)
   end
 
   def store_stage_performer(stageId, userId, username) do
-    :ets.insert(:performer_lookup, {stageId, userId, username})
+    Logger.info("Storing stage performer. Stage ID: #{stageId}, User ID: #{userId}, Username: #{username}")
+
+    key = "#{@redis_key_prefix}#{stageId}:performer"
+    case Redix.command(:redix, ["HSET", key, userId, username]) do
+      {:ok, _response} ->
+        Logger.info("Successfully stored performer with User ID: #{userId} for Stage ID: #{stageId}")
+        :ok
+
+      {:error, reason} ->
+        Logger.error("Failed to store performer with User ID: #{userId} for Stage ID: #{stageId}. Reason: #{inspect(reason)}")
+        {:error, reason}
+    end
   end
 
   def has_stage_performer(stageId) do
@@ -52,7 +89,24 @@ defmodule Spotlive.StageMemoryService do
   end
 
   def delete_taken_seat(stageId, seatIdx, userId) do
-    :ets.delete_object(:seat_lookup, {stageId, seatIdx, userId})
+    Logger.info("Deleting seat user. Stage ID: #{stageId}, User ID: #{userId}")
+
+    key = "#{@redis_key_prefix}#{stageId}:seats"
+    
+    case Redix.command(:redix, ["HDEL", key, userId]) do
+      {:ok, _deleted_count} ->
+        Logger.info(
+          "Successfully deleted seat, user with ID: #{userId} from Stage ID: #{stageId}"
+        )
+        :ok
+
+      {:error, reason} ->
+        Logger.error(
+          "Failed to delete seat user with ID: #{userId} from Stage ID: #{stageId}. Reason: #{inspect(reason)}"
+        )
+
+        {:error, reason}
+    end
   end
 
   def users(stageId) do

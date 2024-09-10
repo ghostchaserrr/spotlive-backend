@@ -7,6 +7,7 @@ defmodule Spotlive.Application do
 
   @impl true
   def start(_type, _args) do
+    redis_url = System.get_env("REDIS_CONNECTION_URL") || "redis://localhost:6374"
     children = [
       SpotliveWeb.Telemetry,
       Spotlive.Repo,
@@ -18,6 +19,7 @@ defmodule Spotlive.Application do
       # {Spotlive.Worker, arg},
       # Start to serve requests, typically the last entry
       SpotliveWeb.Endpoint,
+      {Redix, {redis_url, [name: :redix]}}
       # Task for stage-id-1 with a unique ID
       # Supervisor.child_spec({Task, fn -> SpotliveWeb.StageStateMachine.generate_round("stage-id-1") end}, id: :stage_1_task),
     ]
@@ -34,6 +36,8 @@ defmodule Spotlive.Application do
     :ets.new(:stage_lookup,   [:named_table, :public])
     :ets.new(:session_lookup,   [:named_table, :public])
     :ets.new(:performer_lookup, [:named_table, :public])
+    
+    opts = [strategy: :one_for_one, name: Spotlive.Supervisor]
     Supervisor.start_link(children, opts)
   end
 

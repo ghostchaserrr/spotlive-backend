@@ -32,6 +32,8 @@ defmodule Spotlive.MixProject do
   # Type `mix help deps` for examples and options.
   defp deps do
     [
+      {:mox, "~> 1.0", only: :test},
+      {:redix, "~> 1.1"},
       {:uuid, "~> 1.1"},
       {:corsica, "~> 1.1.3"},
       {:joken, "~> 2.5"},

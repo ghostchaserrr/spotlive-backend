@@ -115,7 +115,9 @@ defmodule SpotliveWeb.StageChannel do
     stageId = socket.assigns.stageId
     userId = Map.get(session, :id)
 
-    StageMemoryService.delete_connected_user(stageId, userId, username)
+    # case. remove user from stage
+    StageMemoryService.delete_connected_user(stageId, userId)
+
     broadcast!(socket, "viewer_left", %{
       :message => "A viewer has left the stage",
       :session => session
