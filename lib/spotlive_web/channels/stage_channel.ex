@@ -26,7 +26,7 @@ defmodule SpotliveWeb.StageChannel do
 
     StageMemoryService.store_connected_user(stageId, userId, username)
 
-    users = StageMemoryService.users(stageId)
+    users = StageMemoryService.read_users(stageId)
 
     push(socket, "connected_users", users)
 
@@ -59,23 +59,14 @@ defmodule SpotliveWeb.StageChannel do
     username = socket.assigns.session.username
     userId = Map.get(session, :id)
 
-    case StageMemoryService.has_stage_performer(stageId) do
-      true ->
-        push(socket, "error", %{:error => "stage_taken", :stageId => stageId})
-        {:noreply, socket}
+    StageMemoryService.store_stage_performer(stageId, userId, username)
 
-      false ->
-        Logger.info("user requests to take stage. user: #{userId}. stage #{stageId}")
-        StageMemoryService.store_stage_performer(stageId, userId, username)
+    broadcast!(socket, "take_stage", %{
+      message: "performer selected",
+      session: session,
+      stageId: stageId
+    })
 
-        broadcast!(socket, "take_stage", %{
-          message: "performer selected",
-          session: session,
-          stageId: stageId
-        })
-
-        {:noreply, socket}
-    end
   end
 
   def handle_take_seat(%{"seatIdx" => seatIdx}, socket) do
