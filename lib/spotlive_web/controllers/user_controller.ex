@@ -7,7 +7,7 @@ defmodule SpotliveWeb.UserController do
     session = conn.assigns[:session]
     conn
     |> put_status(200)
-    |> json(%{"session" => session})
+    |> json(session)
   end
 
   def signin(conn, %{"username" => username, "password" => password}) do
