@@ -2,6 +2,73 @@ defmodule Spotlive.StageMemoryService do
   require Logger
 
   @redis_key_prefix "stage:"
+  @redis_round_key_prefix "round:"
+
+  def read_live_round_phase(stageId) do
+    case read_live_round(stageId) do
+      state ->
+        Map.get(state, :phase)
+
+      {:error, reason} ->
+        Logger.error(
+          "Failed to read live phase from Stage ID: #{stageId}. Reason: #{inspect(reason)}"
+        )
+
+        {:error, reason}
+    end
+  end
+
+  def read_live_round(stageId) do
+    key = "#{@redis_round_key_prefix}#{stageId}"
+
+    case Redix.command(:redix, ["HGETALL", key]) do
+      {:ok, []} ->
+        nil
+
+      {:ok, rounds} ->
+        Enum.chunk_every(rounds, 2)
+        |> Enum.map(fn [roundId, phase] ->
+          %{:roundId => roundId, :phase => phase}
+        end)
+        |> List.first()
+
+      {:error, reason} ->
+        Logger.error(
+          "Failed to read live round from Stage ID: #{stageId}. Reason: #{inspect(reason)}"
+        )
+
+        {:error, reason}
+    end
+  end
+
+  def store_or_update_live_round(stageId, roundId, phase) do
+    key = "#{@redis_round_key_prefix}#{stageId}"
+
+    case Redix.command(:redix, ["HSET", key, roundId, phase]) do
+      {:ok, _} ->
+        # Redis returned an ok, meaning the data was written or updated successfully
+        {:ok, "Round ID field updated successfully"}
+
+      {:error, reason} ->
+        # Redis returned an error, you can handle it here
+        {:error, "Failed to update round ID field: #{reason}"}
+    end
+  end
+
+  def delete_round_data(stageId) do
+    key = "#{@redis_round_key_prefix}#{stageId}"
+
+    case Redix.command(:redix, ["DEL", key]) do
+      {:ok, deleted_count} when deleted_count > 0 ->
+        {:ok, "Round data deleted successfully"}
+
+      {:ok, 0} ->
+        {:error, "No round data found for the given stage"}
+
+      {:error, reason} ->
+        {:error, "Failed to delete round data: #{reason}"}
+    end
+  end
 
   def store_connected_user(stageId, userId, username) do
     Logger.info(
@@ -14,13 +81,16 @@ defmodule Spotlive.StageMemoryService do
 
   def read_seats(stageId) do
     key = "#{@redis_key_prefix}#{stageId}:seats"
+
     case Redix.command(:redix, ["HGETALL", key]) do
       {:ok, []} ->
         []
 
       {:ok, users} ->
         Enum.chunk_every(users, 2)
-        |> Enum.map(fn [seatIdx, userId] -> %{:seatIdx => String.to_integer(seatIdx), :userId => String.to_integer(userId)} end)
+        |> Enum.map(fn [seatIdx, userId] ->
+          %{:seatIdx => String.to_integer(seatIdx), :userId => String.to_integer(userId)}
+        end)
 
       {:error, reason} ->
         Logger.error(
@@ -29,7 +99,6 @@ defmodule Spotlive.StageMemoryService do
 
         {:error, reason}
     end
-
   end
 
   def read_users(stageId) do
@@ -42,7 +111,9 @@ defmodule Spotlive.StageMemoryService do
 
       {:ok, users} ->
         Enum.chunk_every(users, 2)
-        |> Enum.map(fn [userId, username] -> %{id: String.to_integer(userId), username: username} end)
+        |> Enum.map(fn [userId, username] ->
+          %{id: String.to_integer(userId), username: username}
+        end)
 
       {:error, reason} ->
         Logger.error(
@@ -74,6 +145,7 @@ defmodule Spotlive.StageMemoryService do
           nil -> nil
           userId -> String.to_integer(userId)
         end
+
       {:error, reason} ->
         nil
     end
@@ -86,6 +158,21 @@ defmodule Spotlive.StageMemoryService do
 
     key = "#{@redis_key_prefix}#{stageId}:seats"
     Redix.command!(:redix, ["HSET", key, seatIdx, userId])
+  end
+
+  def delete_round_field(stageId, roundId) do
+    key = "#{@redis_round_key_prefix}#{stageId}"
+
+    case Redix.command(:redix, ["HDEL", key, roundId]) do
+      {:ok, deleted_count} when deleted_count > 0 ->
+        {:ok, "Round ID field deleted successfully"}
+
+      {:ok, 0} ->
+        {:error, "Round ID field not found"}
+
+      {:error, reason} ->
+        {:error, "Failed to delete round ID field: #{reason}"}
+    end
   end
 
   def delete_connected_user(stageId, userId) do
@@ -119,7 +206,9 @@ defmodule Spotlive.StageMemoryService do
 
       {:ok, performers} ->
         Enum.chunk_every(performers, 2)
-        |> Enum.map(fn [userId, username] -> %{id: String.to_integer(userId), username: username} end)
+        |> Enum.map(fn [userId, username] ->
+          %{id: String.to_integer(userId), username: username}
+        end)
         |> List.first()
 
       {:error, reason} ->
@@ -176,19 +265,4 @@ defmodule Spotlive.StageMemoryService do
         {:error, reason}
     end
   end
-
-
-  def rounds do
-    rounds = :ets.tab2list(:round_lookup)
-
-    rounds =
-      Enum.map(rounds, fn {stageId, roundId, phase} ->
-        %{
-          :stageId => stageId,
-          :roundId => roundId,
-          :phase => phase
-        }
-      end)
-  end
-
 end

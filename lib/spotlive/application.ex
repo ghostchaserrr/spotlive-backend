@@ -27,7 +27,6 @@ defmodule Spotlive.Application do
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
     opts = [strategy: :one_for_one, name: Spotlive.Supervisor]
-    :ets.new(:round_lookup,   [:named_table, :public])
     :ets.new(:session_lookup,   [:named_table, :public])
     :ets.new(:stage_lookup,   [:named_table, :public])
     opts = [strategy: :one_for_one, name: Spotlive.Supervisor]

@@ -13,11 +13,7 @@ defmodule SpotliveWeb.StageGateways do
       {:ok, %{"user_id" => user_id}} ->
         user = UserDatabaseService.get_user_by_user_id(user_id)
         session = %{:id => user.id, :username => user.username}
-        
-        # case. load live round
-        result = :ets.tab2list(:round_lookup)
-        IO.inspect(result)
-       
+               
         {:ok, assign(socket, :session, session)}
 
       {:error, reason} ->
