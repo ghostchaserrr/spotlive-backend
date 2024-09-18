@@ -3,6 +3,7 @@ defmodule Spotlive.StageMemoryService do
 
   @redis_key_prefix "stage:"
   @redis_round_key_prefix "round:"
+  @redis_stage_config_prefix "config:"
 
   def read_live_round_phase(stageId) do
     case read_live_round(stageId) do
@@ -16,6 +17,61 @@ defmodule Spotlive.StageMemoryService do
 
         {:error, reason}
     end
+  end
+
+  def get_config(stageId) do
+    key = "#{@redis_stage_config_prefix}#{stageId}"
+    Logger.info(key)
+
+    case Redix.command(:redix, ["HGETALL", key]) do
+      {:ok, []} ->
+        nil
+
+      {:ok, configs} ->
+        Logger.info("configs: #{inspect(configs)}")
+
+        map =
+          configs
+          |> Enum.chunk_every(2)
+          |> Enum.into(%{}, fn [phase, duration] -> {phase, String.to_integer(duration)} end)
+
+        
+
+      {:error, reason} ->
+        Logger.error("failed to load configs: Reason: #{inspect(reason)}")
+
+        {:error, reason}
+    end
+  end
+
+  def init_config(stageId, config) do
+    preparing = Map.get(config, :preparing)
+    performing = Map.get(config, :performing)
+    feedback = Map.get(config, :feedback)
+    finish = Map.get(config, :finish)
+
+    Logger.info("preparing: #{preparing}")
+    Logger.info("performing: #{performing}")
+    Logger.info("feedback: #{feedback}")
+    Logger.info("finish: #{finish}")
+
+    key = "#{@redis_stage_config_prefix}#{stageId}"
+    Logger.info(key)
+
+    Redix.command(:redix, [
+      "HSET",
+      key,
+      "preparing",
+      preparing,
+      "performing",
+      performing,
+      "feedback",
+      feedback,
+      "finish",
+      finish
+    ])
+
+    Logger.info("config inserted #{stageId} #{inspect(config)}")
   end
 
   def read_live_round(stageId) do
