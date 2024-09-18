@@ -5,6 +5,40 @@ defmodule Spotlive.StageMemoryService do
   @redis_round_key_prefix "round:"
   @redis_stage_config_prefix "config:"
 
+  def read_live_stages() do
+    keys = read_live_stages_keys()
+    commands = Enum.map(keys, fn key -> ["HGETALL", key] end)
+
+    # Execute commands in parallel
+    {:ok, responses} = Redix.pipeline(:redix, commands)
+
+    # Convert responses into a map of keys and their respective hash data
+    Enum.zip(keys, responses)
+    |> Enum.into(%{})
+  end
+
+  def read_live_stages_keys do
+    key = "#{@redis_round_key_prefix}*"
+
+    scan_live_stages_keys(0, key, fn keys ->
+      keys
+    end)
+  end
+
+  def scan_live_stages_keys(cursor, key, func) do
+    command = ["SCAN", cursor, "MATCH", key]
+    {:ok, [new_cursor, keys]} = Redix.command(:redix, command)
+
+    case new_cursor do
+      # exit case
+      "0" ->
+        func.(keys)
+
+      _ ->
+        func.(keys) ++ scan_live_stages_keys(new_cursor, key, func)
+    end
+  end
+
   def read_live_round_phase(stageId) do
     case read_live_round(stageId) do
       state ->
@@ -34,8 +68,6 @@ defmodule Spotlive.StageMemoryService do
           configs
           |> Enum.chunk_every(2)
           |> Enum.into(%{}, fn [phase, duration] -> {phase, String.to_integer(duration)} end)
-
-        
 
       {:error, reason} ->
         Logger.error("failed to load configs: Reason: #{inspect(reason)}")

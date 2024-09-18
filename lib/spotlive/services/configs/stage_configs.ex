@@ -33,6 +33,36 @@ defmodule Spotlive.StageConfigs do
         :performing => 5000,
         :feedback => 5000,
         :finish => 5000
+      },
+      "stage-id-6" => %{
+        :preparing => 5000,
+        :performing => 5000,
+        :feedback => 5000,
+        :finish => 5000
+      },
+      "stage-id-7" => %{
+        :preparing => 5000,
+        :performing => 5000,
+        :feedback => 5000,
+        :finish => 5000
+      },
+      "stage-id-8" => %{
+        :preparing => 5000,
+        :performing => 5000,
+        :feedback => 5000,
+        :finish => 5000
+      },
+      "stage-id-9" => %{
+        :preparing => 5000,
+        :performing => 5000,
+        :feedback => 5000,
+        :finish => 5000
+      },
+      "stage-id-10" => %{
+        :preparing => 5000,
+        :performing => 5000,
+        :feedback => 5000,
+        :finish => 5000
       }
     }
 

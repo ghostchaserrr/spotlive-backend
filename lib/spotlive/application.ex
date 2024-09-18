@@ -11,6 +11,11 @@ defmodule Spotlive.Application do
   @stageId3 "stage-id-3"
   @stageId4 "stage-id-4"
   @stageId5 "stage-id-5"
+  @stageId6 "stage-id-6"
+  @stageId7 "stage-id-7"
+  @stageId8 "stage-id-8"
+  @stageId9 "stage-id-9"
+  @stageId10 "stage-id-10"
 
   @impl true
   def start(_type, _args) do
@@ -30,10 +35,15 @@ defmodule Spotlive.Application do
       {Redix, {redis_url, [name: :redix]}},
       {Registry, keys: :unique, name: SpotliveWeb.StageRegistry},
       Supervisor.child_spec({SpotliveWeb.StageStateMachine, "#{@stageId1}"}, id: :stage_1_task),
-      # Supervisor.child_spec({SpotliveWeb.StageStateMachine, "#{@stageId2}"}, id: :stage_2_task),
-      # Supervisor.child_spec({SpotliveWeb.StageStateMachine, "#{@stageId3}"}, id: :stage_3_task),
-      # Supervisor.child_spec({SpotliveWeb.StageStateMachine, "#{@stageId4}"}, id: :stage_4_task),
-      # Supervisor.child_spec({SpotliveWeb.StageStateMachine, "#{@stageId5}"}, id: :stage_5_task)
+      Supervisor.child_spec({SpotliveWeb.StageStateMachine, "#{@stageId2}"}, id: :stage_2_task),
+      Supervisor.child_spec({SpotliveWeb.StageStateMachine, "#{@stageId3}"}, id: :stage_3_task),
+      Supervisor.child_spec({SpotliveWeb.StageStateMachine, "#{@stageId4}"}, id: :stage_4_task),
+      Supervisor.child_spec({SpotliveWeb.StageStateMachine, "#{@stageId5}"}, id: :stage_5_task),
+      Supervisor.child_spec({SpotliveWeb.StageStateMachine, "#{@stageId6}"}, id: :stage_6_task),
+      Supervisor.child_spec({SpotliveWeb.StageStateMachine, "#{@stageId7}"}, id: :stage_7_task),
+      Supervisor.child_spec({SpotliveWeb.StageStateMachine, "#{@stageId8}"}, id: :stage_8_task),
+      Supervisor.child_spec({SpotliveWeb.StageStateMachine, "#{@stageId9}"}, id: :stage_9_task),
+      Supervisor.child_spec({SpotliveWeb.StageStateMachine, "#{@stageId10}"}, id: :stage_10_task)
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
@@ -46,6 +56,11 @@ defmodule Spotlive.Application do
     config3 = Spotlive.StageConfigs.default_config("#{@stageId3}")
     config4 = Spotlive.StageConfigs.default_config("#{@stageId4}")
     config5 = Spotlive.StageConfigs.default_config("#{@stageId5}")
+    config6 = Spotlive.StageConfigs.default_config("#{@stageId6}")
+    config7 = Spotlive.StageConfigs.default_config("#{@stageId7}")
+    config8 = Spotlive.StageConfigs.default_config("#{@stageId8}")
+    config9 = Spotlive.StageConfigs.default_config("#{@stageId9}")
+    config10 = Spotlive.StageConfigs.default_config("#{@stageId10}")
 
     opts = [strategy: :one_for_one, name: Spotlive.Supervisor]
 
@@ -57,6 +72,11 @@ defmodule Spotlive.Application do
         Spotlive.StageMemoryService.init_config("#{@stageId3}", config3)
         Spotlive.StageMemoryService.init_config("#{@stageId4}", config4)
         Spotlive.StageMemoryService.init_config("#{@stageId5}", config5)
+        Spotlive.StageMemoryService.init_config("#{@stageId6}", config6)
+        Spotlive.StageMemoryService.init_config("#{@stageId7}", config7)
+        Spotlive.StageMemoryService.init_config("#{@stageId8}", config8)
+        Spotlive.StageMemoryService.init_config("#{@stageId9}", config9)
+        Spotlive.StageMemoryService.init_config("#{@stageId10}", config10)
         {:ok, pid}
 
       {:error, reason} ->
