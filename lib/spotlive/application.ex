@@ -35,15 +35,15 @@ defmodule Spotlive.Application do
       {Redix, {redis_url, [name: :redix]}},
       {Registry, keys: :unique, name: SpotliveWeb.StageRegistry},
       Supervisor.child_spec({SpotliveWeb.StageStateMachine, "#{@stageId1}"}, id: :stage_1_task),
-      Supervisor.child_spec({SpotliveWeb.StageStateMachine, "#{@stageId2}"}, id: :stage_2_task),
-      Supervisor.child_spec({SpotliveWeb.StageStateMachine, "#{@stageId3}"}, id: :stage_3_task),
-      Supervisor.child_spec({SpotliveWeb.StageStateMachine, "#{@stageId4}"}, id: :stage_4_task),
-      Supervisor.child_spec({SpotliveWeb.StageStateMachine, "#{@stageId5}"}, id: :stage_5_task),
-      Supervisor.child_spec({SpotliveWeb.StageStateMachine, "#{@stageId6}"}, id: :stage_6_task),
-      Supervisor.child_spec({SpotliveWeb.StageStateMachine, "#{@stageId7}"}, id: :stage_7_task),
-      Supervisor.child_spec({SpotliveWeb.StageStateMachine, "#{@stageId8}"}, id: :stage_8_task),
-      Supervisor.child_spec({SpotliveWeb.StageStateMachine, "#{@stageId9}"}, id: :stage_9_task),
-      Supervisor.child_spec({SpotliveWeb.StageStateMachine, "#{@stageId10}"}, id: :stage_10_task)
+      # Supervisor.child_spec({SpotliveWeb.StageStateMachine, "#{@stageId2}"}, id: :stage_2_task),
+      # Supervisor.child_spec({SpotliveWeb.StageStateMachine, "#{@stageId3}"}, id: :stage_3_task),
+      # Supervisor.child_spec({SpotliveWeb.StageStateMachine, "#{@stageId4}"}, id: :stage_4_task),
+      # Supervisor.child_spec({SpotliveWeb.StageStateMachine, "#{@stageId5}"}, id: :stage_5_task),
+      # Supervisor.child_spec({SpotliveWeb.StageStateMachine, "#{@stageId6}"}, id: :stage_6_task),
+      # Supervisor.child_spec({SpotliveWeb.StageStateMachine, "#{@stageId7}"}, id: :stage_7_task),
+      # Supervisor.child_spec({SpotliveWeb.StageStateMachine, "#{@stageId8}"}, id: :stage_8_task),
+      # Supervisor.child_spec({SpotliveWeb.StageStateMachine, "#{@stageId9}"}, id: :stage_9_task),
+      # Supervisor.child_spec({SpotliveWeb.StageStateMachine, "#{@stageId10}"}, id: :stage_10_task)
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
@@ -68,15 +68,15 @@ defmodule Spotlive.Application do
       {:ok, pid} ->
         Logger.info("Supervisor started successfully with PID: #{inspect(pid)}")
         Spotlive.StageMemoryService.init_config("#{@stageId1}", config1)
-        Spotlive.StageMemoryService.init_config("#{@stageId2}", config2)
-        Spotlive.StageMemoryService.init_config("#{@stageId3}", config3)
-        Spotlive.StageMemoryService.init_config("#{@stageId4}", config4)
-        Spotlive.StageMemoryService.init_config("#{@stageId5}", config5)
-        Spotlive.StageMemoryService.init_config("#{@stageId6}", config6)
-        Spotlive.StageMemoryService.init_config("#{@stageId7}", config7)
-        Spotlive.StageMemoryService.init_config("#{@stageId8}", config8)
-        Spotlive.StageMemoryService.init_config("#{@stageId9}", config9)
-        Spotlive.StageMemoryService.init_config("#{@stageId10}", config10)
+        # Spotlive.StageMemoryService.init_config("#{@stageId2}", config2)
+        # Spotlive.StageMemoryService.init_config("#{@stageId3}", config3)
+        # Spotlive.StageMemoryService.init_config("#{@stageId4}", config4)
+        # Spotlive.StageMemoryService.init_config("#{@stageId5}", config5)
+        # Spotlive.StageMemoryService.init_config("#{@stageId6}", config6)
+        # Spotlive.StageMemoryService.init_config("#{@stageId7}", config7)
+        # Spotlive.StageMemoryService.init_config("#{@stageId8}", config8)
+        # Spotlive.StageMemoryService.init_config("#{@stageId9}", config9)
+        # Spotlive.StageMemoryService.init_config("#{@stageId10}", config10)
         {:ok, pid}
 
       {:error, reason} ->
