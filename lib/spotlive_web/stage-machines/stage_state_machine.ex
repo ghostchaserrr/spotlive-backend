@@ -12,7 +12,6 @@ defmodule SpotliveWeb.StageStateMachine do
 
   @impl true
   def init(stageId) do
-    Logger.info("gen server ready: #{stageId}")
     GenServer.cast(via_tuple(stageId), :init)
 
     {:ok, %{stage_id: stageId}}
@@ -20,7 +19,6 @@ defmodule SpotliveWeb.StageStateMachine do
 
   @impl true
   def handle_cast(:init, state = %{stage_id: stageId}) do
-    Logger.info("Received round start: #{stageId}")
     start(stageId)
     {:noreply, state}
   end
@@ -30,137 +28,113 @@ defmodule SpotliveWeb.StageStateMachine do
     phase = Map.get(config, "#{phase}")
   end
 
-  defp handle_preparing_phase(stageId, roundId) do
-    Logger.debug("current stage id (#{stageId})")
-    Logger.debug("Live round (#{roundId}) is now in 'preparing' phase.")
+  defp get_topic(roundId) do
+    "stage:#{roundId}"
+  end
 
-    # case. extracing preparing phase seconds
-    preparing = extract_phase_time(stageId, "preparing")
+  defp handle_seating_phase(stageId, roundId) do
+    SpotliveWeb.Endpoint.broadcast(get_topic(roundId), "round:update", %{
+      phase: "seating",
+      roundId: roundId
+    })
 
-    Logger.debug("Guests are preparing for the show. Sleeping for #{preparing} milliseconds.")
-    Process.sleep(preparing)
+    time = extract_phase_time(stageId, "seating")
 
-    # topic.
-    stage = "stage:" <> roundId
+    Process.sleep(time)
+    Logger.debug("phase ended: seating #{stageId} #{roundId}")
 
-    # phase preparing
-    SpotliveWeb.Endpoint.broadcast(stage, "phase_update", %{phase: "preparing", round_id: roundId})
+    # case. once sitting phase ends we check current player cound
+    userIds = StageMemoryService.read_stage_userIds(roundId)
 
-    Logger.debug(
-      "Stage ID: #{stage}. Preparing phase ending, transitioning to 'performing' phase."
-    )
-
-    Logger.debug(
-      "---------------------------------------------------------------------------------"
-    )
-
-    case set_round_phase(stageId, roundId, "performing") do
+    case set_round_phase(stageId, roundId, "preparing") do
       true ->
-        Logger.debug("Successfully updated round (#{roundId}) phase to 'performing'.")
         move_game_state(stageId)
 
       false ->
-        Logger.error("Failed to update round (#{roundId}) to 'performing' phase.")
+        :exit
+    end
+  end
+
+  defp handle_preparing_phase(stageId, roundId) do
+    SpotliveWeb.Endpoint.broadcast(get_topic(roundId), "round:update", %{
+      phase: "preparing",
+      roundId: roundId
+    })
+
+    time = extract_phase_time(stageId, "preparing")
+    Process.sleep(time)
+
+    Logger.debug("phase ended: preparing #{stageId} #{roundId}")
+
+    case set_round_phase(stageId, roundId, "performing") do
+      true ->
+        move_game_state(stageId)
+
+      false ->
         :exit
     end
   end
 
   defp handle_performing_phase(stageId, roundId) do
-    Logger.debug("Stage #{stageId}")
-    Logger.debug("Live round (#{roundId}) is now in 'performing' phase.")
+    SpotliveWeb.Endpoint.broadcast(get_topic(roundId), "round:update", %{
+      phase: "performing",
+      roundId: roundId
+    })
 
     time = extract_phase_time(stageId, "performing")
-
-    # case. extract config in milliseconds
-    Logger.debug("Performer is on stage. Sleeping for #{time} milliseconds")
     Process.sleep(time)
 
-    stage = "stage:" <> roundId
+    Logger.debug("phase ended: performing #{stageId} #{roundId}")
 
-    Logger.debug(
-      "Stage ID: #{stage}. performing phase ending, transitioning to 'feedbacks' phase."
-    )
-
-    Logger.debug(
-      "---------------------------------------------------------------------------------"
-    )
-
-    SpotliveWeb.Endpoint.broadcast(stage, "phase_update", %{phase: "feedbacks", round_id: roundId})
-
-    case set_round_phase(stageId, roundId, "feedbacks") do
+    case set_round_phase(stageId, roundId, "feedback") do
       true ->
-        Logger.debug("Successfully updated round (#{roundId}) phase to 'feedbacks'.")
         move_game_state(stageId)
 
       false ->
-        Logger.error("Failed to update round (#{roundId}) to 'feedbacks' phase.")
         :exit
     end
   end
 
   defp handle_feedback_phase(stageId, roundId) do
-    Logger.debug("Stage: #{stageId}")
-    Logger.debug("Live round (#{roundId}) is now in 'feedbacks' phase.")
+    SpotliveWeb.Endpoint.broadcast(get_topic(roundId), "round:update", %{
+      phase: "feedback",
+      roundId: roundId
+    })
 
-    # Feedback phase lasts 30 seconds (mocked as 5 seconds)
     time = extract_phase_time(stageId, "feedback")
-    Logger.debug("Audience providing feedback. Sleeping for #{time} mills.")
     Process.sleep(time)
 
-    stage = "stage:" <> roundId
-    Logger.debug("Stage ID: #{stage}. Feedback phase ending, transitioning to 'finished' phase.")
+    Logger.debug("phase ended: feedback #{stageId} #{roundId}")
 
-    Logger.debug(
-      "---------------------------------------------------------------------------------"
-    )
-
-    SpotliveWeb.Endpoint.broadcast(stage, "phase_update", %{phase: "finished", round_id: roundId})
-
-    case set_round_phase(stageId, roundId, "finished") do
+    case set_round_phase(stageId, roundId, "finish") do
       true ->
-        Logger.debug("Successfully updated round (#{roundId}) phase to 'finished'.")
         move_game_state(stageId)
 
       false ->
-        Logger.error("Failed to update round (#{roundId}) to 'finished' phase.")
+        Logger.error("Failed to initialize round (#{roundId}) in 'preparing' phase.")
         :exit
     end
   end
 
-  defp handle_finished_phase(stageId, roundId) do
-    Logger.debug("Stage: #{stageId}")
-    Logger.debug("Live round (#{roundId}) has finished.")
-    stage = "stage:" <> roundId
+  defp handle_finish_phase(stageId, roundId) do
+    newRoundId = init_live_round()
 
+    SpotliveWeb.Endpoint.broadcast(get_topic(roundId), "round:update", %{
+      phase: "finish",
+      roundId: newRoundId
+    })
 
+    Logger.debug("round init: #{stageId} #{newRoundId}")
 
-    Logger.debug(
-      "---------------------------------------------------------------------------------"
-    )
-
-    time = extract_phase_time(stageId, "feedback")
-    Logger.debug("Round finished. Sleeping for #{time} mills.")
-    Process.sleep(time)
+    Process.sleep(5000)
 
     StageMemoryService.delete_round_data(stageId)
 
-
-    new_round_id = init_live_round()
-    Logger.debug("Starting a new round with round ID: #{new_round_id}.")
-
-    SpotliveWeb.Endpoint.broadcast(stage, "phase_update", %{
-      phase: "finish",
-      round_id: new_round_id,
-      prev_round_id: roundId
-    })
-
-    case set_round_phase(stageId, new_round_id, "preparing") do
+    case set_round_phase(stageId, newRoundId, "seating") do
       true ->
-        Logger.debug("Successfully updated round (#{new_round_id}) phase to 'preparing'.")
         move_game_state(stageId)
 
       false ->
-        Logger.error("Failed to update new round (#{new_round_id}) to 'preparing' phase.")
         :exit
     end
   end
@@ -170,14 +144,13 @@ defmodule SpotliveWeb.StageStateMachine do
       state ->
         phase = Map.get(state, :phase)
         roundId = Map.get(state, :roundId)
-        Logger.debug("Stage: #{stageId}")
-        Logger.debug("Phase: #{phase}. Round ID: #{roundId} Moving game state.")
 
         cond do
+          phase == "seating" -> handle_seating_phase(stageId, roundId)
           phase == "preparing" -> handle_preparing_phase(stageId, roundId)
           phase == "performing" -> handle_performing_phase(stageId, roundId)
-          phase == "feedbacks" -> handle_feedback_phase(stageId, roundId)
-          phase == "finished" -> handle_finished_phase(stageId, roundId)
+          phase == "feedback" -> handle_feedback_phase(stageId, roundId)
+          phase == "finish" -> handle_finish_phase(stageId, roundId)
         end
 
       {:error, reason} ->
@@ -192,46 +165,35 @@ defmodule SpotliveWeb.StageStateMachine do
        ) do
     case StageMemoryService.store_or_update_live_round(stageId, roundId, phase) do
       {:ok, message} ->
-        Logger.debug(
-          "Successfully inserted/updated round (#{roundId}) to phase: '#{phase}'. message: #{message}"
-        )
-
         true
 
       {:error, reason} ->
-        Logger.error(
-          "Failed to insert/update round (#{roundId}) to phase: '#{phase}'. reason: #{reason}"
-        )
-
         false
     end
   end
 
   defp init_live_round() do
-    Logger.debug(
-      "---------------------------------------------------------------------------------"
-    )
-
     roundId = Ecto.UUID.generate()
-    Logger.debug("Generated new round ID: #{roundId}.")
     roundId
   end
 
   def start(stageId) do
     roundId = init_live_round()
-    Logger.info("starting state machine: #{stageId}")
-    Logger.info("generated round id: #{roundId}")
 
     # case. start fresh round
     StageMemoryService.delete_round_data(stageId)
 
-    case set_round_phase(stageId, roundId, "preparing") do
+    SpotliveWeb.Endpoint.broadcast(get_topic(roundId), "round:update", %{
+      phase: "seating",
+      roundId: roundId
+    })
+
+    # case. move round to seating phase
+    case set_round_phase(stageId, roundId, "seating") do
       true ->
-        Logger.debug("Starting state machine for round (#{roundId}).")
         move_game_state(stageId)
 
       false ->
-        Logger.error("Failed to initialize round (#{roundId}) in 'preparing' phase.")
         :exit
     end
   end

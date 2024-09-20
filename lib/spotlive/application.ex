@@ -66,7 +66,7 @@ defmodule Spotlive.Application do
 
     case Supervisor.start_link(children, opts) do
       {:ok, pid} ->
-        Logger.info("Supervisor started successfully with PID: #{inspect(pid)}")
+        # Logger.info("Supervisor started successfully with PID: #{inspect(pid)}")
         Spotlive.StageMemoryService.init_config("#{@stageId1}", config1)
         # Spotlive.StageMemoryService.init_config("#{@stageId2}", config2)
         # Spotlive.StageMemoryService.init_config("#{@stageId3}", config3)

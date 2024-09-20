@@ -3,10 +3,9 @@ defmodule SpotliveWeb.StageGateways do
   alias SpotliveWeb.JWTHelper
   alias Spotlive.UserDatabaseService
 
-
   channel "stage:*", SpotliveWeb.StageChannel
 
-  transport(:websocket, Phoenix.Transports.WebSocket)
+  transport :websocket, Phoenix.Transports.WebSocket, check_origin: false
 
   def connect(%{"token" => token}, socket, _connect_info) do
     case JWTHelper.verify(token) do

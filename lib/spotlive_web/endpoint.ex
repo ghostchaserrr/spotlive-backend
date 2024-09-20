@@ -12,11 +12,12 @@ defmodule SpotliveWeb.Endpoint do
   ]
 
 
-
-  # Socket Endpoint
+  plug CORSPlug, origin: "*"
+  
   socket "/socket", SpotliveWeb.StageGateways,
     websocket: true,
     longpoll: false
+
 
 
   socket "/live", Phoenix.LiveView.Socket,
@@ -61,6 +62,6 @@ defmodule SpotliveWeb.Endpoint do
   plug Plug.MethodOverride
   plug Plug.Head
   plug Plug.Session, @session_options
-  plug CORSPlug, origin: "*"
+
   plug SpotliveWeb.Router
 end
