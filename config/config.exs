@@ -7,6 +7,7 @@
 # General application configuration
 import Config
 
+config :spotlive, :sms_service_key, "267|ug5oaBKATg5UQfgI1rNCddiC1QJIdRSHeOVUe6h60f4fe71f"
 config :joken, default_signer: "secret"
 config :spotlive,
   ecto_repos: [Spotlive.Repo],

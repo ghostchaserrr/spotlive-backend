@@ -30,13 +30,13 @@ defmodule Spotlive.UserDatabaseService do
   
       case user do
         nil ->
-          {:error, "Invalid username or password"}
+          {:error, "error:credentials"}
   
         user ->
           if Bcrypt.verify_pass(password, user.password_hash) do
             {:ok, user}
           else
-            {:error, "Invalid username or password"}
+            {:error, "error:credentials"}
           end
       end
     end

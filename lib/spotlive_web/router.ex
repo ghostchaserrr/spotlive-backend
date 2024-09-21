@@ -21,8 +21,10 @@ defmodule SpotliveWeb.Router do
   scope "/api", SpotliveWeb do
     pipe_through :api
 
-    post "/signup",  UserController, :signup
-    post "/signin",  UserController, :signin
+    post "/signup",      UserController, :signup
+    post "/signin",      UserController, :signin
+    # post "/otp/create",  UserController, :otpCreate
+    # post "/otp/verify",  UserController, :otpVerify
 
   end
 

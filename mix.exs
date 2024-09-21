@@ -32,6 +32,7 @@ defmodule Spotlive.MixProject do
   # Type `mix help deps` for examples and options.
   defp deps do
     [
+      {:httpoison, "~> 2.0"},
       {:mox, "~> 1.0", only: :test},
       {:redix, "~> 1.1"},
       {:uuid, "~> 1.1"},
