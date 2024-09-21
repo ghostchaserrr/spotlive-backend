@@ -35,29 +35,8 @@ defmodule SpotliveWeb.StageChannel do
     {:noreply, socket}
   end
 
-  # def handle_take_stage(conn, socket) do
-  #   session = socket.assigns.session
-  #   username = socket.assigns.session.username
-  #   userId = Map.get(session, :id)
-  #   roundId = socket.assigns.roundId
-
-  #   StageMemoryService.store_stage_performer(roundId, userId, username)
-
-  #   broadcast!(socket, "take:stage", %{
-  #     message: "performer selected",
-  #     session: session,
-  #     roundId: roundId
-  #   })
-
-  #   {:noreply, socket}
-  # end
-
-  # Handle incoming messages if necessary
   def handle_in(event, params, socket) do
     case event do
-      # "take:stage" ->
-      #   handle_take_stage(params, socket)
-
       "leave:seat" ->
         Spotlive.SeatsHandler.handle_leave_seat(params, socket)
 
@@ -78,6 +57,23 @@ defmodule SpotliveWeb.StageChannel do
 
     # case. remove user from stage
     StageMemoryService.delete_connected_user(roundId, userId)
+
+    # case. remove taken seat
+    case StageMemoryService.read_user_seat(roundId, userId) do
+      {:ok, seatIdx} ->
+        Logger.warn("removing user seat: #{roundId} #{userId} #{seatIdx}")
+
+        case StageMemoryService.delete_seat(roundId, seatIdx, userId) do
+          {:ok, keys} ->
+            Logger.warn("seat cleared upon termination #{seatIdx} #{userId} #{roundId}")
+
+            broadcast!(socket, "leave:seat", %{
+              message: "seat:cleared",
+              session: session,
+              seatIdx: seatIdx
+            })
+        end
+    end
 
     broadcast!(socket, "user:leave", %{
       :message => "user has left the stage",
