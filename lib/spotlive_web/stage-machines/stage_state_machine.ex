@@ -3,6 +3,7 @@ defmodule SpotliveWeb.StageStateMachine do
   require Logger
   alias Spotlive.StageMemoryService
   alias Spotlive.StageConfigs
+  alias Spotlive.Algos.StagePerformerSelector
 
   def start_link(stageId) do
     GenServer.start_link(__MODULE__, stageId, name: via_tuple(stageId))
@@ -44,14 +45,52 @@ defmodule SpotliveWeb.StageStateMachine do
     Logger.debug("phase ended: seating #{stageId} #{roundId}")
 
     # case. once sitting phase ends we check current player cound
-    userIds = StageMemoryService.read_stage_userIds(roundId)
+    users = StageMemoryService.read_users(roundId)
 
-    case set_round_phase(stageId, roundId, "preparing") do
-      true ->
-        move_game_state(stageId)
+    userIds =
+      Enum.map(users, fn %{:id => id, :username => username} ->
+        id
+      end)
 
-      false ->
-        :exit
+    Logger.debug("users: #{inspect(userIds)}")
+
+    case userIds do
+      [] ->
+        case set_round_phase(stageId, roundId, "preparing") do
+          true ->
+            move_game_state(stageId)
+
+          false ->
+            Logger.error("Failed to initialize round (#{roundId}) in 'preparing' phase.")
+            :exit
+        end
+
+      userIds ->
+        payload = StagePerformerSelector.pickPerformer(roundId, userIds)
+        userId = Map.get(payload, :userId)
+        user = Enum.find(users, fn %{:id => id} -> id == userId end)
+        username = Map.get(user, :username)
+        Logger.info("stage performer: #{userId} #{username} #{stageId} #{roundId}")
+
+        case StageMemoryService.select_performer(roundId, userId, username) do
+          true ->
+            # case. broadcast message to lobby that performer has been selected
+            SpotliveWeb.Endpoint.broadcast(get_topic(roundId), "select:performer", %{
+              roundId: roundId,
+              session: user
+            })
+
+            case set_round_phase(stageId, roundId, "preparing") do
+              true ->
+                move_game_state(stageId)
+
+              false ->
+                :exit
+            end
+
+          false ->
+            :exit
+        end
     end
   end
 

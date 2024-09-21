@@ -10,7 +10,7 @@ defmodule Spotlive.StageMemoryService do
   @redis_stage_config_prefix "config:"
 
   def read_stage_userIds(roundId) do
-    key = "#{@redis_user_seats_prefix}:#{roundId}"
+    key = "#{@redis_users_prefix}#{roundId}"
 
     case Redix.command(:redix, ["HGETALL", key]) do
       {:ok, []} ->
@@ -473,7 +473,7 @@ defmodule Spotlive.StageMemoryService do
     end
   end
 
-  def store_stage_performer(roundId, userId, username) do
+  def select_performer(roundId, userId, username) do
     Logger.info(
       "Attempting to store stage performer. Round ID: #{roundId}, User ID: #{userId}, Username: #{username}"
     )

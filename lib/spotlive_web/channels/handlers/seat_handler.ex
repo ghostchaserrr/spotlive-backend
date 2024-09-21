@@ -4,7 +4,7 @@ defmodule Spotlive.SeatsHandler do
   alias Spotlive.StageMemoryService
   require Logger
 
-  def handle_leave_seat(%{"stageId" => stageId}, socket, socket) do
+  def handle_leave_seat(%{"stageId" => stageId}, socket) do
     session = socket.assigns.session
     username = socket.assigns.session.username
     userId = Map.get(session, :id)
