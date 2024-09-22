@@ -3,6 +3,8 @@ defmodule SpotliveWeb.StageController do
   alias SpotliveWeb.JWTHelper
   alias Spotlive.UserDatabaseService
   alias Spotlive.StageMemoryService
+  alias Spotlive.ReactionsMemoryService
+
   alias SpotliveWeb.CommonHelper
   require Logger
 
@@ -27,6 +29,10 @@ defmodule SpotliveWeb.StageController do
     users = CommonHelper.construct_users_map(users)
     seats = CommonHelper.construct_seats_map(seats)
 
+    # case. read current round reactions
+    reactions = ReactionsMemoryService.read_reactions(roundId)
+    
+
     conn
     |> put_status(200)
     |> json(%{
@@ -34,7 +40,8 @@ defmodule SpotliveWeb.StageController do
       "stageId" => stageId,
       "phase" => phase,
       "users" => users,
-      "performer" => performer
+      "performer" => performer,
+      "reactions" => reactions
     })
   end
 end

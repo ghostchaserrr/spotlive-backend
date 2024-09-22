@@ -149,14 +149,14 @@ defmodule Spotlive.StageMemoryService do
     end
   end
 
-  def read_live_round_phase(stageId) do
-    case read_live_round(stageId) do
+  def read_live_round_phase(roundId) do
+    case read_live_round(roundId) do
       state ->
         Map.get(state, :phase)
 
       {:error, reason} ->
         Logger.error(
-          "Failed to read live phase from Round ID: #{stageId}. Reason: #{inspect(reason)}"
+          "Failed to read live phase from Round ID: #{roundId}. Reason: #{inspect(reason)}"
         )
 
         {:error, reason}

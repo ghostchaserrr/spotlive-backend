@@ -43,6 +43,9 @@ defmodule SpotliveWeb.StageChannel do
       "take:seat" ->
         Spotlive.SeatsHandler.handle_take_seat(params, socket)
 
+      "send:reaction" ->
+        Spotlive.ReactionsHandler.handle_send_reaction(params, socket)
+
       _ ->
         push(socket, "error", "invalid event")
         {:noreply, socket}
