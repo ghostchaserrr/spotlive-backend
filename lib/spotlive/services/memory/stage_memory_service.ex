@@ -165,6 +165,7 @@ defmodule Spotlive.StageMemoryService do
 
   def get_config(stageId) do
     key = "#{@redis_stage_config_prefix}#{stageId}"
+
     case Redix.command(:redix, ["HGETALL", key]) do
       {:ok, []} ->
         nil
@@ -188,6 +189,7 @@ defmodule Spotlive.StageMemoryService do
     finish = Map.get(config, :finish)
     seating = Map.get(config, :seating)
     key = "#{@redis_stage_config_prefix}#{stageId}"
+
     Redix.command(:redix, [
       "HSET",
       key,
@@ -262,7 +264,32 @@ defmodule Spotlive.StageMemoryService do
     )
 
     key = "#{@redis_users_prefix}#{roundId}"
-    Redix.command!(:redix, ["HSET", key, userId, username])
+
+    case Redix.command!(:redix, ["HSET", key, userId, username]) do
+      {:ok, result} ->
+        # Log success
+        Logger.info(
+          "Successfully stored user. Round ID: #{roundId}, User ID: #{userId}. Redis response: #{inspect(result)}"
+        )
+
+        {:ok, result}
+
+      result when is_integer(result) ->
+        # Handle the case where result is an integer (number of fields added)
+        Logger.info(
+          "User stored successfully with count: #{result}. Round ID: #{roundId}, User ID: #{userId}."
+        )
+
+        {:ok, result}
+
+      _other ->
+        # Handle unexpected results
+        Logger.error(
+          "Unexpected response from Redis. Round ID: #{roundId}, User ID: #{userId}. Response: #{inspect(_other)}"
+        )
+
+        {:error, :unexpected_response}
+    end
   end
 
   def read_seats(roundId) do

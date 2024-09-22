@@ -10,11 +10,17 @@ defmodule SpotliveWeb.StageChannel do
     {:ok, assign(socket, :roundId, roundId)}
   end
 
-  def handle_info(:after_join, socket) do
-    session = socket.assigns.session
-    roundId = socket.assigns.roundId
-    userId = Map.get(session, :id)
-    username = Map.get(session, :username)
+  defp broadcast_join_error(socket) do
+    {session, _, _, _} = get_session(socket)
+
+    push(socket, "user:join", %{
+      :message => "user:join:exception",
+      :session => session
+    })
+  end
+
+  defp broadcast_join(socket) do
+    {session, _, _, _} = get_session(socket)
 
     broadcast!(socket, "user:join", %{
       :message => "A new user has joined the stage",
@@ -27,10 +33,27 @@ defmodule SpotliveWeb.StageChannel do
       :message => "A new user has joined the stage",
       :session => session
     })
+  end
 
-    Logger.info("User connected to stage: #{roundId}")
+  defp get_session(socket) do
+    session = socket.assigns.session
+    roundId = socket.assigns.roundId
+    userId = Map.get(session, :id)
+    username = Map.get(session, :username)
 
-    StageMemoryService.store_connected_user(roundId, userId, username)
+    {session, roundId, userId, username}
+  end
+
+  def handle_info(:after_join, socket) do
+    {session, roundId, userId, username} = get_session(socket)
+
+    case StageMemoryService.store_connected_user(roundId, userId, username) do
+      {:ok, result} ->
+        broadcast_join(socket)
+
+      _ ->
+        broadcast_join_error(socket)
+    end
 
     {:noreply, socket}
   end
@@ -53,10 +76,7 @@ defmodule SpotliveWeb.StageChannel do
   end
 
   def terminate(_reason, socket) do
-    session = socket.assigns.session
-    username = socket.assigns.session.username
-    roundId = socket.assigns.roundId
-    userId = Map.get(session, :id)
+    {session, roundId, userId, username} = get_session(socket)
 
     # case. remove user from stage
     StageMemoryService.delete_connected_user(roundId, userId)
