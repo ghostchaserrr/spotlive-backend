@@ -4,6 +4,7 @@ defmodule SpotliveWeb.StageStateMachine do
   alias Spotlive.StageMemoryService
   alias Spotlive.StageConfigs
   alias Spotlive.Algos.StagePerformerSelector
+  alias Spotlive.UserDatabaseService
 
   def start_link(stageId) do
     GenServer.start_link(__MODULE__, stageId, name: via_tuple(stageId))
@@ -45,17 +46,13 @@ defmodule SpotliveWeb.StageStateMachine do
     Logger.debug("phase ended: seating #{stageId} #{roundId}")
 
     # case. once sitting phase ends we check current player cound
-    users = StageMemoryService.read_users(roundId)
-
-    userIds =
-      Enum.map(users, fn %{:id => id, :username => username} ->
-        id
-      end)
-
-    Logger.debug("users: #{inspect(userIds)}")
+    userIds = StageMemoryService.read_stage_userIds(roundId)
+    users = UserDatabaseService.bulk_get_users_by_ids(userIds)
 
     case userIds do
       [] ->
+        Logger.debug("no users: #{inspect(users)}")
+
         case set_round_phase(stageId, roundId, "preparing") do
           true ->
             move_game_state(stageId)
@@ -66,6 +63,7 @@ defmodule SpotliveWeb.StageStateMachine do
         end
 
       userIds ->
+        Logger.debug("round stage users: #{inspect(users)}")
         payload = StagePerformerSelector.pickPerformer(roundId, userIds)
         userId = Map.get(payload, :userId)
         user = Enum.find(users, fn %{:id => id} -> id == userId end)

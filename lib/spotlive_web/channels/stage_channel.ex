@@ -69,6 +69,10 @@ defmodule SpotliveWeb.StageChannel do
       "send:reaction" ->
         Spotlive.ReactionsHandler.handle_send_reaction(params, socket)
 
+      # case. handles textual content user input
+      "send:content:text" ->
+        Spotlive.TextContentHandler.handle_send_text(params, socket)
+
       _ ->
         push(socket, "error", "invalid event")
         {:noreply, socket}

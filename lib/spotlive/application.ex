@@ -34,7 +34,7 @@ defmodule Spotlive.Application do
       SpotliveWeb.Endpoint,
       {Redix, {redis_url, [name: :redix]}},
       {Registry, keys: :unique, name: SpotliveWeb.StageRegistry},
-      # Supervisor.child_spec({SpotliveWeb.StageStateMachine, "#{@stageId1}"}, id: :stage_1_task),
+      Supervisor.child_spec({SpotliveWeb.StageStateMachine, "#{@stageId1}"}, id: :stage_1_task),
       # Supervisor.child_spec({SpotliveWeb.StageStateMachine, "#{@stageId2}"}, id: :stage_2_task),
       # Supervisor.child_spec({SpotliveWeb.StageStateMachine, "#{@stageId3}"}, id: :stage_3_task),
       # Supervisor.child_spec({SpotliveWeb.StageStateMachine, "#{@stageId4}"}, id: :stage_4_task),
